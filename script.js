@@ -10,8 +10,10 @@ Promise.all([
     console.log(err);
   });
 
-function start() {
+async function start() {
   const container = document.createElement("div");
+  const labeledDescriptors = await loadLabeledImages();
+  const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
   container.style.position = "relative";
   document.body.append(container);
   document.body.append("Loaded");
@@ -32,10 +34,14 @@ function start() {
       .withFaceDescriptors();
 
     const resizedDetection = faceapi.resizeResults(detections, displaySize);
-
-    resizedDetection.forEach((detection) => {
-      const box = detection.detection.box;
-      const drawBox = new faceapi.draw.DrawBox(box, { label: "Face" });
+    const results = resizedDetection.map((d) =>
+      faceMatcher.findBestMatch(d.descriptor)
+    );
+    results.forEach((result, i) => {
+      const box = resizedDetection[i].detection.box;
+      const drawBox = new faceapi.draw.DrawBox(box, {
+        label: result.toString(),
+      });
       drawBox.draw(canvas);
     });
 
@@ -47,27 +53,31 @@ function loadLabeledImages() {
   const lables = [
     "Aditya",
     "Anil",
-    "Archan",
-    "Gabriel_bheekar",
-    "Jaydeep",
-    "Keyur",
-    "Krupal",
-    "Manthan",
-    "Ritesh",
-    "Satish",
-    "Shailesh",
-    "Shyam sinh",
-    "Sushobhit sinh",
-    "Yash Fullstack",
-    "Yash hingu",
-    "Yug Sinh",
+    // "Archan",
+    // "Gabriel_bheekar",
+    // "Krupal",
+    // "Ritesh",
+    // "Satish",
+    // "Yash Fullstack",
+    // "Yash hingu",
   ];
 
   return Promise.all(
     lables.map(async (lable) => {
+      const discriptions = [];
       for (let i = 1; i <= 2; i++) {
-        const img = await faceapi.fetchImage;
+        const img = await faceapi.fetchImage(
+          `https://github.com/KrupalMalakiya/faceRecognition_JavaScript/tree/master/images/${lable}/${i}.jpg`
+        );
+
+        const detection = await faceapi
+          .detectSingleFace(img)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        discriptions.push(detection.descriptor);
       }
+      return new faceapi.LabeledFaceDescriptors(lable, discriptions);
     })
   );
 }
