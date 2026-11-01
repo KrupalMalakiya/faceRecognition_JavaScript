@@ -1,204 +1,149 @@
-# FaceMatch JS &bull; Automated AI Facial Attendance System
+# FaceMatch JS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Engine: TensorFlow.js](https://img.shields.io/badge/Engine-TensorFlow.js-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
 [![Library: face--api.js](https://img.shields.io/badge/Library-face--api.js-green.svg)](https://github.com/justadudewhohacks/face-api.js)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet)](#-privacy--security-guarantee)
 [![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational.svg)](CHANGELOG.md)
 
-> **The open-source, client-side facial recognition terminal designed to replace manual pen-and-paper signature sheets with privacy-preserving, zero-cloud automated attendance.**
+Client-side facial recognition and automated biometric attendance terminal powered by TensorFlow.js and face-api.js.
 
 ---
 
-## 🌐 Live Web Application
+## Live Demo
 
-Experience the live attendance terminal directly in your browser:  
-👉 **[Launch FaceMatch JS Live Terminal](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)**
-
----
-
-## 🎯 The Mission: Replacing Pen-and-Paper Signature Sheets
-
-Many offices, colleges, and organizations still rely on manual paper signature sheets for daily check-ins. This legacy workflow introduces:
-* ⏳ Physical bottleneck queues during morning rush hours.
-* ✍️ Human error, lost paper records, and buddy punching (proxy signatures).
-* 🔒 Biometric privacy compliance hurdles with cloud-based surveillance vendors who harvest employee photos.
-
-**FaceMatch JS** solves this with an instant, browser-based biometric terminal:
-1. Mount any budget tablet, laptop, or webcam kiosk at the entrance.
-2. Coworkers look at the screen—the neural network recognizes them in milliseconds.
-3. Automatically marks them `Present` with exact timestamps and chime feedback.
-4. Export the complete daily attendance sheet to `.CSV` / Excel with a single click.
-5. **Zero cloud biometric transmission:** 100% of face detection and vector math runs in local browser memory!
+The production application is hosted on GitHub Pages:  
+[https://krupalmalakiya.github.io/faceRecognition_JavaScript/](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)
 
 ---
 
-## ✨ Features & Capabilities
+## Overview
 
-* **📋 Automated Biometric Attendance:** Recognizes coworkers at $\ge 70\%$ confidence and logs `[Date, Time, Name, Status: Present]` with audio chime feedback.
-* **🛡️ Duplicate Check-In Protection:** Prevents spamming check-ins for the same coworker within the same day.
-* **📥 One-Click CSV Export:** Export daily check-ins to a clean spreadsheet file compatible with Excel and Google Sheets.
-* **💾 Persistent Storage:** Attendance records survive page refreshes via secure local storage.
-* **🔒 100% Client-Side Privacy:** All neural network inference, feature extraction, and Euclidean distance vector matching run strictly inside your browser's WebGL context. No images or biometric vectors are ever transmitted to any external server.
-* **📹 Live Webcam Video Tracking:** Real-time multi-face tracking and recognition over 30 FPS video feeds with live FPS benchmarking.
-* **➕ In-Browser Face Enrollment:** Dynamically enroll new face profiles directly from the UI without modifying source code.
-* **💾 Biometric Vector Export / Import:** Export 128-dimensional facial embeddings to `.json` files and reload them instantly without re-processing raw images.
-* **⚡ Dual Neural Detector Architecture:**
-  * **SSD MobileNet V1:** High-precision Single Shot MultiBox Detector for static photos.
-  * **Tiny Face Detector:** Ultra-lightweight (~190 KB) real-time detector optimized for live video feeds and low-power devices.
-* **📐 68-Point Facial Landmark Mesh:** Pinpoints precise facial topography (eyes, eyebrows, nose bridge, lips, and jaw contours).
-* **🎛️ Real-Time Distance Threshold Tuning:** Dynamically tune Euclidean distance thresholds (`0.10` to `0.80`) with zero-latency re-matching.
-* **🧪 Pre-loaded Benchmark Samples:** Instant one-click testing with bundled multi-face group photos (`ALL.jpg` and `IMG_3641.jpg`).
+FaceMatch JS is a browser-based biometric attendance terminal designed to replace physical paper-and-pen signature sheets in workplaces, classrooms, and labs.
+
+Most proprietary attendance systems rely on cloud surveillance architectures where facial images are transmitted to external servers, creating privacy risks and compliance challenges. FaceMatch JS performs all detection, alignment, feature extraction, and vector matching locally within the browser's WebGL context. No images or biometric vectors ever leave the client machine.
 
 ---
 
-## 🧠 Architecture & Neural Pipeline
+## Features
+
+- **Automated Check-in Logging:** Identifies enrolled faces at or above 70% confidence and records check-in timestamp, date, and status.
+- **Duplicate Prevention:** Automatically ignores subsequent detections of the same individual on the same calendar day.
+- **CSV Attendance Export:** Generates clean daily check-in spreadsheets compatible with Microsoft Excel and Google Sheets.
+- **Persistent Local Storage:** Retains daily logs across browser reloads without requiring an external database.
+- **Real-Time Video Feed:** Multi-face tracking over 30 FPS webcam streams with continuous FPS measurement.
+- **In-Browser Profile Enrollment:** Allows enrolling new individuals directly via photo upload without code changes.
+- **Biometric Vector Import/Export:** Serializes 128-dimensional facial descriptors to JSON for instant loading.
+- **Dual Neural Detectors:** Supports SSD MobileNet V1 for high-precision photo matching and Tiny Face Detector for low-latency live video feeds.
+- **68-Point Facial Landmarks:** Real-time mesh visualization mapping jawline, nose, eyes, and mouth contours.
+
+---
+
+## Architecture
 
 ```
-                       ┌──────────────────────────────┐
-                       │  Input Media (Photo / Video) │
-                       └──────────────┬───────────────┘
-                                      │
-                   ┌──────────────────┴──────────────────┐
-                   ▼                                     ▼
-        ┌─────────────────────┐               ┌─────────────────────┐
-        │   SSD MobileNet V1  │               │ Tiny Face Detector  │
-        │   (High Accuracy)   │               │ (Real-Time Webcam)  │
-        └──────────┬──────────┘               └──────────┬──────────┘
-                   └──────────────────┬──────────────────┘
-                                      ▼
-                      ┌────────────────────────────────┐
-                      │ 68-Point Facial Landmark Net   │
-                      │ (Facial Alignment & Mesh)      │
-                      └───────────────┬────────────────┘
-                                      ▼
-                      ┌────────────────────────────────┐
-                      │ Face Recognition ResNet-34 Net │
-                      │ (128-Dimensional Vector Embed) │
-                      └───────────────┬────────────────┘
-                                      ▼
-                      ┌────────────────────────────────┐
-                      │ Euclidean Distance FaceMatcher │
-                      │ (Distance Threshold: 0.10-0.80)│
-                      └───────────────┬────────────────┘
-                                      ▼
-                      ┌────────────────────────────────┐
-                      │ Synchronized Canvas Overlay    │
-                      │ (Bounding Box, Name, Match %)  │
-                      └────────────────────────────────┘
+                       [ Input: Static Image or Video Stream ]
+                                         |
+                  +----------------------+----------------------+
+                  |                                             |
+                  v                                             v
+        [ SSD MobileNet V1 ]                         [ Tiny Face Detector ]
+        (High Accuracy Photo Mode)                   (Low Latency Video Mode)
+                  |                                             |
+                  +----------------------+----------------------+
+                                         |
+                                         v
+                      [ 68-Point Facial Landmark Network ]
+                      (Face Alignment & Geometric Mesh)
+                                         |
+                                         v
+                      [ ResNet-34 Face Recognition Net ]
+                      (128-Dimensional Vector Descriptor)
+                                         |
+                                         v
+                      [ Euclidean Distance FaceMatcher ]
+                      (Adjustable Threshold: 0.10 - 0.80)
+                                         |
+                                         v
+                      [ Canvas Overlay & Attendance Logger ]
+                      (Bounding Box, Identity, Timestamp, CSV)
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Option 1: Run with Node.js / NPX (Recommended)
+### Node.js (Recommended)
 
-1. **Clone the repository:**
+1. Clone the repository:
    ```bash
    git clone https://github.com/KrupalMalakiya/faceRecognition_JavaScript.git
    cd faceRecognition_JavaScript
    ```
 
-2. **Start the local server:**
+2. Start the local server:
    ```bash
    npm start
    ```
    *(or run `npx serve .`)*
 
-3. **Open in browser:**  
-   Navigate to `http://localhost:3000` (or the URL printed in terminal).
+3. Open your browser at `http://localhost:3000`.
 
----
-
-### Option 2: Python 3 HTTP Server
+### Python 3
 
 ```bash
 python -m http.server 8080
 ```
-Open `http://localhost:8080` in your web browser.
+Navigate to `http://localhost:8080`.
 
 ---
 
-### Option 3: VS Code Live Server Extension
+## Adding Custom Profiles
 
-1. Open this directory in **Visual Studio Code**.
-2. Right-click `index.html` and select **"Open with Live Server"**.
+New individuals can be enrolled in two ways:
 
----
+### Method A: In-Browser (No Code)
+1. Open the web application.
+2. Click **+ Enroll Face** in the Registered Profiles panel.
+3. Enter the full name and upload a reference photo.
+4. The system extracts the 128-dimensional descriptor and updates the matcher immediately.
 
-## 📁 Repository Structure
-
-```
-faceRecognition_JavaScript/
-├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.yml          # GitHub bug report form
-│   │   └── feature_request.yml     # GitHub feature proposal form
-│   ├── workflows/
-│   │   └── deploy.yml              # Automated GitHub Pages CI/CD
-│   └── PULL_REQUEST_TEMPLATE.md    # PR submission checklist
-├── images/                         # Default labeled profile dataset
-│   ├── Aditya/
-│   ├── Anil/
-│   ├── Archan/
-│   ├── Gabriel/
-│   ├── Krupal/
-│   ├── Ritesh/
-│   ├── Satish/
-│   ├── Yash_Fullstack/
-│   └── Yash_Hingu/
-├── models/                         # Pre-trained TensorFlow.js neural weights
-│   ├── ssd_mobilenetv1_model-*
-│   ├── tiny_face_detector_model-*
-│   ├── face_landmark_68_model-*
-│   ├── face_recognition_model-*
-│   └── mtcnn_model-*
-├── Test/                           # Test group photos
-│   ├── ALL.jpg
-│   └── IMG_3641.jpg
-├── CHANGELOG.md                    # Semantic version history
-├── CODE_OF_CONDUCT.md              # Contributor Covenant v2.1
-├── CONTRIBUTING.md                 # Contribution guidelines
-├── LICENSE                         # MIT License
-├── README.md                       # Documentation & architecture
-├── face-api.min.js                 # face-api.js neural runtime
-├── index.html                      # Application UI
-├── package.json                    # Project configuration & npm metadata
-├── script.js                       # Core application engine & webcam pipeline
-├── SECURITY.md                     # Security & vulnerability reporting policy
-└── style.css                       # Responsive dark glassmorphic styling
-```
+### Method B: Directory Structure
+1. Add a new directory under `./images/<Name>/`.
+2. Add reference photos named `1.jpg`, `2.jpg`.
+3. Register the folder in `script.js`:
+   ```javascript
+   const DEFAULT_PROFILES = [
+     // ...
+     { folder: "Jane_Doe", name: "Jane Doe", count: 2 },
+   ];
+   ```
 
 ---
 
-## 📦 Neural Models Specification
+## Model Specifications
 
-| Model | Underlying Architecture | Primary Function | Weight Size |
+| Model | Architecture | Task | Weight Size |
 | :--- | :--- | :--- | :--- |
-| **SSD MobileNet V1** | Single Shot MultiBox Detector + MobileNet | High-precision face bounding box detection | ~5.6 MB |
-| **Tiny Face Detector** | Depthwise separable CNN (custom mobile) | Real-time video face detection | ~190 KB |
-| **Face Landmark 68 Net** | Convolutional Landmark Localization | 68-point facial mesh mapping | ~360 KB |
-| **Face Recognition Net** | ResNet-34 based deep metric embedding | 128-dimensional biometric descriptor | ~6.4 MB |
+| **SSD MobileNet V1** | Single Shot MultiBox Detector + MobileNet | Face Detection (Photos) | ~5.6 MB |
+| **Tiny Face Detector** | Depthwise Separable CNN | Face Detection (Webcam) | ~190 KB |
+| **Face Landmark 68 Net** | Convolutional Landmark Regressor | 68-Point Facial Mesh | ~360 KB |
+| **Face Recognition Net** | ResNet-34 Metric Learning | 128-d Biometric Embeddings | ~6.4 MB |
 
 ---
 
-## 🔒 Privacy & Security Guarantee
+## Privacy & Security
 
-* **Zero Cloud Data Transmission:** All face recognition, biometrics, and camera frames are processed exclusively inside your client machine's browser memory.
-* **No Telemetry / No Analytics:** FaceMatch JS contains zero third-party trackers, analytics beacons, or remote logs.
-
----
-
-## 🤝 Contributing
-
-Contributions, bug reports, and optimizations are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide and adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Client-Side Execution:** Model weights execute in-browser via WebGL. Images, video frames, and biometric vectors are stored strictly in client memory.
+- **Zero Telemetry:** The application contains no tracking scripts, remote analytics, cookies, or third-party network requests.
 
 ---
 
-## 📄 License
+## Contributing
 
-This software is released under the **MIT License** &bull; see the [LICENSE](LICENSE) file for complete details.
+Pull requests, bug reports, and optimizations are welcome. Please consult [CONTRIBUTING.md](CONTRIBUTING.md) and adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Developed with ❤️ by [Krupal Malakiya](https://github.com/KrupalMalakiya).
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
