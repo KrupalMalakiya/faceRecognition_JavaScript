@@ -35,6 +35,13 @@ const thresholdSlider = document.getElementById("thresholdSlider");
 const thresholdValue = document.getElementById("thresholdValue");
 const toggleLandmarks = document.getElementById("toggleLandmarks");
 const toggleBoxes = document.getElementById("toggleBoxes");
+const toggleAutoAttendance = document.getElementById("toggleAutoAttendance");
+
+// UI Elements - Attendance System
+const attendanceCount = document.getElementById("attendanceCount");
+const attendanceTableBody = document.getElementById("attendanceTableBody");
+const btnExportCsv = document.getElementById("btnExportCsv");
+const btnClearAttendance = document.getElementById("btnClearAttendance");
 
 // UI Elements - Viewport & Results
 const viewerContainer = document.getElementById("viewerContainer");
@@ -85,6 +92,15 @@ let currentCanvas = null;
 let lastDetections = null;
 let isReady = false;
 
+// Attendance Log State (Persisted in localStorage)
+let attendanceLog = [];
+try {
+  const saved = localStorage.getItem("facematch_attendance_log");
+  if (saved) attendanceLog = JSON.parse(saved);
+} catch (e) {
+  attendanceLog = [];
+}
+
 // Webcam State
 let webcamStream = null;
 let webcamVideo = null;
@@ -115,6 +131,7 @@ async function initEngine() {
     // Initialize FaceMatcher with current threshold
     rebuildFaceMatcher();
     renderProfileBadges();
+    renderAttendanceTable();
 
     isReady = true;
     updateStatus("ready", "System Ready for Recognition");
@@ -291,6 +308,11 @@ function renderDetections(inferenceTime = null) {
       distance: distance.toFixed(2),
       confidence: confidencePct,
     });
+
+    // Auto-mark attendance for identified coworkers
+    if (!isUnknown && confidencePct >= 70 && toggleAutoAttendance.checked) {
+      logAttendance(match.label, confidencePct);
+    }
 
     if (toggleBoxes.checked) {
       const boxColor = isUnknown ? "#ef4444" : "#10b981";
@@ -658,6 +680,148 @@ function setupEventListeners() {
   btnExportJson.addEventListener("click", exportEmbeddingsToJson);
   btnImportJson.addEventListener("click", () => jsonInput.click());
   jsonInput.addEventListener("change", importEmbeddingsFromJson);
+
+  // Attendance Actions
+  btnExportCsv.addEventListener("click", exportAttendanceCsv);
+  btnClearAttendance.addEventListener("click", clearAttendanceLog);
+}
+
+// 10. Automated Attendance System Helpers
+function logAttendance(name, confidencePct) {
+  const today = new Date().toLocaleDateString();
+
+  // Prevent multiple check-ins for the same coworker today
+  const alreadyCheckedIn = attendanceLog.some(
+    (entry) => entry.name.toLowerCase() === name.toLowerCase() && entry.date === today
+  );
+
+  if (alreadyCheckedIn) return;
+
+  const now = new Date();
+  const timeString = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  const record = {
+    id: Date.now(),
+    date: today,
+    time: timeString,
+    name: name,
+    confidence: `${confidencePct}%`,
+    status: "Present",
+  };
+
+  attendanceLog.unshift(record);
+  saveAttendanceLog();
+  renderAttendanceTable();
+  playAttendanceChime();
+  showToast(`✅ ${name} checked in (Present) at ${timeString}!`, "success");
+}
+
+function renderAttendanceTable() {
+  attendanceCount.textContent = attendanceLog.length;
+
+  if (attendanceLog.length === 0) {
+    attendanceTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="attendance-empty">
+          No coworkers checked in yet today. Faces recognized above 70% confidence are logged automatically.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  attendanceTableBody.innerHTML = attendanceLog
+    .map(
+      (entry) => `
+      <tr>
+        <td>${escapeHtml(entry.time)}</td>
+        <td><strong>${escapeHtml(entry.name)}</strong></td>
+        <td>${escapeHtml(entry.confidence)}</td>
+        <td><span class="badge-present">● ${escapeHtml(entry.status)}</span></td>
+      </tr>
+    `
+    )
+    .join("");
+}
+
+function saveAttendanceLog() {
+  try {
+    localStorage.setItem("facematch_attendance_log", JSON.stringify(attendanceLog));
+  } catch (e) {
+    console.warn("Could not save attendance log to localStorage:", e);
+  }
+}
+
+function exportAttendanceCsv() {
+  if (attendanceLog.length === 0) {
+    showToast("Attendance log is currently empty.", "warning");
+    return;
+  }
+
+  const headers = ["ID", "Date", "Time", "Coworker Name", "Confidence", "Status"];
+  const rows = attendanceLog.map((e) => [
+    e.id,
+    `"${e.date}"`,
+    `"${e.time}"`,
+    `"${e.name.replace(/"/g, '""')}"`,
+    `"${e.confidence}"`,
+    `"${e.status}"`,
+  ]);
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const dlLink = document.createElement("a");
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  dlLink.setAttribute("href", url);
+  dlLink.setAttribute("download", `facematch-attendance-${todayStr}.csv`);
+  document.body.appendChild(dlLink);
+  dlLink.click();
+  dlLink.remove();
+  URL.revokeObjectURL(url);
+
+  showToast("Attendance spreadsheet (.CSV) exported!", "success");
+}
+
+function clearAttendanceLog() {
+  if (attendanceLog.length === 0) {
+    showToast("Attendance log is already empty.", "info");
+    return;
+  }
+
+  if (confirm("Reset today's attendance records?")) {
+    attendanceLog = [];
+    saveAttendanceLog();
+    renderAttendanceTable();
+    showToast("Attendance records reset.", "info");
+  }
+}
+
+// Gentle Web Audio API Synthesized Chime (No audio files needed)
+function playAttendanceChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Note D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // Note A5
+
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch (err) {
+    // Autoplay restrictions or unavailable audio device
+  }
 }
 
 function switchMode(mode) {

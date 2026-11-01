@@ -3,6 +3,15 @@
 All notable changes to **FaceMatch JS** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-01
+
+### Added
+- **Automated Attendance Logging:** Automatic real-time check-in logging (`[Time, Date, Coworker Name, Status: Present]`) upon facial recognition ($\ge 70\%$ confidence).
+- **Duplicate Check-In Protection:** Prevents duplicate attendance logging for the same coworker within the same day.
+- **CSV Attendance Export:** One-click spreadsheet download (`facematch-attendance-YYYY-MM-DD.csv`) for Excel and Google Sheets integration.
+- **Synthesized Web Audio Chime:** Two-tone subtle audio feedback upon successful biometric check-in without external audio assets.
+- **LocalStorage Persistence:** Retains the day's attendance log through browser reloads.
+
 ## [1.1.0] - 2026-11-01
 
 ### Added

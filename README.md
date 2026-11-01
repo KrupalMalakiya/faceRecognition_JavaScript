@@ -1,25 +1,45 @@
-# FaceMatch JS &bull; Real-Time Client-Side Face Recognition &amp; Biometrics
+# FaceMatch JS &bull; Automated AI Facial Attendance System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Engine: TensorFlow.js](https://img.shields.io/badge/Engine-TensorFlow.js-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
 [![Library: face--api.js](https://img.shields.io/badge/Library-face--api.js-green.svg)](https://github.com/justadudewhohacks/face-api.js)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet)](#-privacy--security-guarantee)
-[![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational.svg)](CHANGELOG.md)
+[![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational.svg)](CHANGELOG.md)
 
-> **High-performance client-side face recognition, live webcam video tracking, and 68-point facial landmark mesh localization powered by TensorFlow.js and face-api.js.**
+> **The open-source, client-side facial recognition terminal designed to replace manual pen-and-paper signature sheets with privacy-preserving, zero-cloud automated attendance.**
 
 ---
 
 ## 🌐 Live Web Application
 
-Try the production web app directly in your browser without local installation:  
-👉 **[Launch FaceMatch JS Live Demo](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)**
+Experience the live attendance terminal directly in your browser:  
+👉 **[Launch FaceMatch JS Live Terminal](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)**
+
+---
+
+## 🎯 The Mission: Replacing Pen-and-Paper Signature Sheets
+
+Many offices, colleges, and organizations still rely on manual paper signature sheets for daily check-ins. This legacy workflow introduces:
+* ⏳ Physical bottleneck queues during morning rush hours.
+* ✍️ Human error, lost paper records, and buddy punching (proxy signatures).
+* 🔒 Biometric privacy compliance hurdles with cloud-based surveillance vendors who harvest employee photos.
+
+**FaceMatch JS** solves this with an instant, browser-based biometric terminal:
+1. Mount any budget tablet, laptop, or webcam kiosk at the entrance.
+2. Coworkers look at the screen—the neural network recognizes them in milliseconds.
+3. Automatically marks them `Present` with exact timestamps and chime feedback.
+4. Export the complete daily attendance sheet to `.CSV` / Excel with a single click.
+5. **Zero cloud biometric transmission:** 100% of face detection and vector math runs in local browser memory!
 
 ---
 
 ## ✨ Features & Capabilities
 
+* **📋 Automated Biometric Attendance:** Recognizes coworkers at $\ge 70\%$ confidence and logs `[Date, Time, Name, Status: Present]` with audio chime feedback.
+* **🛡️ Duplicate Check-In Protection:** Prevents spamming check-ins for the same coworker within the same day.
+* **📥 One-Click CSV Export:** Export daily check-ins to a clean spreadsheet file compatible with Excel and Google Sheets.
+* **💾 Persistent Storage:** Attendance records survive page refreshes via secure local storage.
 * **🔒 100% Client-Side Privacy:** All neural network inference, feature extraction, and Euclidean distance vector matching run strictly inside your browser's WebGL context. No images or biometric vectors are ever transmitted to any external server.
 * **📹 Live Webcam Video Tracking:** Real-time multi-face tracking and recognition over 30 FPS video feeds with live FPS benchmarking.
 * **➕ In-Browser Face Enrollment:** Dynamically enroll new face profiles directly from the UI without modifying source code.

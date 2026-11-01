@@ -1,7 +1,7 @@
 {
   "name": "facematch-js",
-  "version": "1.1.0",
-  "description": "High-performance client-side face recognition, live webcam tracking, and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js.",
+  "version": "1.2.0",
+  "description": "Production client-side automated facial recognition attendance terminal, live webcam tracking, and 68-point landmark mesh detection powered by TensorFlow.js and face-api.js.",
   "main": "script.js",
   "scripts": {
     "start": "npx serve .",
