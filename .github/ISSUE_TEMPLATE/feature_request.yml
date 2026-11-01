@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest an idea or architectural improvement for FaceMatch JS
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for contributing ideas to make FaceMatch JS better!
+  - type: input
+    id: feature-title
+    attributes:
+      label: Feature Title
+      description: A short, clear title for your idea.
+      placeholder: e.g., WebGPU backend acceleration support
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific limitation or use case?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe what you would like to see happen.
+    validations:
+      required: true

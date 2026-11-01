@@ -1,21 +1,23 @@
 {
-  "name": "face-recognition-javascript",
-  "version": "1.0.0",
-  "description": "Real-time, client-side face recognition and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js.",
+  "name": "facematch-js",
+  "version": "1.1.0",
+  "description": "High-performance client-side face recognition, live webcam tracking, and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js.",
   "main": "script.js",
   "scripts": {
     "start": "npx serve .",
     "dev": "npx serve .",
-    "test": "echo \"Client-side test suite: open index.html in a web browser\" && exit 0"
+    "test": "echo \"Client-side test suite: launch index.html in an evergreen browser\" && exit 0"
   },
   "keywords": [
     "face-recognition",
+    "facematch",
     "face-api",
     "tensorflowjs",
-    "javascript",
+    "webcam-tracking",
     "computer-vision",
     "artificial-intelligence",
     "facial-landmarks",
+    "biometrics",
     "client-side-ai",
     "open-source"
   ],

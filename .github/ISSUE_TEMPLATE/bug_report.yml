@@ -1,0 +1,37 @@
+name: Bug Report
+description: Create a report to help us improve FaceMatch JS
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: A concise description of the bug.
+      placeholder: e.g., Model weights fail to load when served under a subpath
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this behavior?
+      placeholder: |
+        1. Open index.html in Chrome
+        2. Click 'Live Webcam'
+        3. See error in console
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Info
+      description: OS, browser version, GPU/hardware acceleration status.
+      placeholder: |
+        - OS: Windows 11 / macOS Sonoma / Ubuntu 22.04
+        - Browser: Chrome 124 / Firefox 125
+        - WebGL: Enabled
+    validations:
+      required: true

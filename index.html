@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FaceMatch JS - Client-Side AI Face Recognition</title>
-  <meta name="description" content="Real-time, client-side face recognition and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js." />
+  <title>FaceMatch JS - Real-Time AI Face Recognition & Biometrics</title>
+  <meta name="description" content="Production-grade client-side facial recognition, live webcam tracking, and 68-point landmark mesh detection powered by TensorFlow.js and face-api.js." />
   
   <link rel="stylesheet" href="style.css" />
   <script defer src="face-api.min.js"></script>
   <script defer src="script.js"></script>
 </head>
 <body>
-  <!-- Header -->
+  <!-- App Header -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand">
@@ -28,14 +28,14 @@
         </div>
         <div>
           <h1 class="brand-title">FaceMatch JS</h1>
-          <p class="brand-subtitle">Real-Time Client-Side Face Recognition & Landmarks</p>
+          <p class="brand-subtitle">Real-Time Client-Side Face Recognition &amp; Biometrics</p>
         </div>
       </div>
 
       <div class="header-actions">
         <div id="statusPill" class="status-pill loading">
           <span class="status-dot"></span>
-          <span id="statusText">Initializing Neural Engine...</span>
+          <span id="statusText">Loading Neural Models...</span>
         </div>
         
         <a href="https://github.com/KrupalMalakiya/faceRecognition_JavaScript" target="_blank" rel="noopener noreferrer" class="btn-github">
@@ -48,86 +48,171 @@
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main Container -->
   <main class="main-container">
-    <!-- Left Sidebar: Controls & Input -->
+    <!-- Left Column: Controls & Profiles -->
     <aside class="sidebar">
+      <!-- Mode Switcher Tabs -->
+      <nav class="tabs-nav">
+        <button id="tabPhoto" class="tab-btn active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          Photo Mode
+        </button>
+        <button id="tabWebcam" class="tab-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"></path>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          Live Webcam
+        </button>
+      </nav>
+
       <!-- Registered Profiles Card -->
       <section class="card">
-        <h2 class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Registered Profiles (<span id="profileCount">9</span>)
-        </h2>
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Registered Profiles (<span id="profileCount">9</span>)
+          </div>
+          <button id="btnOpenEnroll" class="btn-mini" title="Enroll a new profile directly in your browser">
+            + Enroll Face
+          </button>
+        </div>
+
         <div id="profileBadges" class="profile-badges">
-          <span class="profile-tag">Aditya</span>
-          <span class="profile-tag">Anil</span>
-          <span class="profile-tag">Archan</span>
-          <span class="profile-tag">Gabriel</span>
-          <span class="profile-tag">Krupal</span>
-          <span class="profile-tag">Ritesh</span>
-          <span class="profile-tag">Satish</span>
-          <span class="profile-tag">Yash Fullstack</span>
-          <span class="profile-tag">Yash Hingu</span>
+          <!-- Populated dynamically via JS -->
         </div>
-      </section>
 
-      <!-- Upload Card -->
-      <section class="card">
-        <h2 class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          Input Image
-        </h2>
-        
-        <div id="dropzone" class="dropzone">
-          <div class="dropzone-icon">📷</div>
-          <p class="dropzone-text"><strong>Click to upload</strong> or drag & drop</p>
-          <p class="dropzone-hint">Supports JPG, PNG, WEBP</p>
-          <input type="file" id="fileInput" accept="image/*" />
-        </div>
-      </section>
-
-      <!-- Instant Test Samples -->
-      <section class="card">
-        <h2 class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-          Instant Test Samples
-        </h2>
-        <div class="samples-grid">
-          <button id="btnSample1" class="btn-sample" disabled>
-            <span>👥 Group Photo 1</span>
-            <small>ALL.jpg (Multi-face)</small>
+        <!-- Biometric Embeddings Export / Import -->
+        <div class="vector-actions">
+          <button id="btnExportJson" class="btn-secondary" title="Export 128-d vector embeddings to JSON file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export JSON
           </button>
-          <button id="btnSample2" class="btn-sample" disabled>
-            <span>🏢 Group Photo 2</span>
-            <small>IMG_3641.jpg (Indoor)</small>
+          <button id="btnImportJson" class="btn-secondary" title="Import pre-computed vector embeddings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Import JSON
           </button>
+          <input type="file" id="jsonInput" accept=".json,application/json" />
         </div>
       </section>
 
-      <!-- Detection Settings -->
+      <!-- Panel: Photo Analysis Controls (Active in Photo Mode) -->
+      <div id="panelPhoto">
+        <!-- Upload Card -->
+        <section class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload Test Image
+            </div>
+          </div>
+          
+          <div id="dropzone" class="dropzone">
+            <div class="dropzone-icon">📷</div>
+            <p class="dropzone-text"><strong>Click to upload</strong> or drag & drop</p>
+            <p class="dropzone-hint">Supports JPG, PNG, WEBP</p>
+            <input type="file" id="fileInput" accept="image/*" />
+          </div>
+        </section>
+
+        <!-- Instant Test Samples -->
+        <section class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Instant Test Samples
+            </div>
+          </div>
+          <div class="samples-grid">
+            <button id="btnSample1" class="btn-sample" disabled>
+              <span>👥 Group Photo 1</span>
+              <small>ALL.jpg (Multi-face)</small>
+            </button>
+            <button id="btnSample2" class="btn-sample" disabled>
+              <span>🏢 Group Photo 2</span>
+              <small>IMG_3641.jpg (Indoor)</small>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Panel: Webcam Controls (Active in Webcam Mode) -->
+      <div id="panelWebcam" style="display: none;">
+        <section class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              Camera Feed Control
+            </div>
+          </div>
+          
+          <div class="webcam-controls">
+            <button id="btnToggleCamera" class="btn-camera" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 7l-7 5 7 5V7z"></path>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+              <span id="cameraBtnText">Start Webcam Stream</span>
+            </button>
+            <small style="font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+              Requires browser webcam permissions. Video stream is processed 100% locally.
+            </small>
+          </div>
+        </section>
+      </div>
+
+      <!-- Detection Engine Settings -->
       <section class="card">
-        <h2 class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          Matching Parameters
-        </h2>
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Engine Parameters
+          </div>
+        </div>
 
         <div class="control-group">
           <div class="control-label">
-            <span>Distance Threshold</span>
+            <span>Neural Detector Model</span>
+          </div>
+          <select id="modelSelector" class="control-select">
+            <option value="ssdMobilenetv1" selected>SSD MobileNet V1 (High Accuracy)</option>
+            <option value="tinyFaceDetector">Tiny Face Detector (High Speed / Webcam)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Euclidean Distance Threshold</span>
             <span id="thresholdValue" class="control-value">0.50</span>
           </div>
           <input type="range" id="thresholdSlider" min="0.10" max="0.80" step="0.05" value="0.50" />
@@ -138,48 +223,50 @@
 
         <div class="control-group">
           <label class="toggle-group">
-            <span>Show Facial Landmarks (68 mesh points)</span>
+            <span>Show 68-Point Landmark Mesh</span>
             <input type="checkbox" id="toggleLandmarks" />
           </label>
           <label class="toggle-group">
-            <span>Show Bounding Boxes</span>
+            <span>Show Detection Bounding Boxes</span>
             <input type="checkbox" id="toggleBoxes" checked />
           </label>
         </div>
       </section>
     </aside>
 
-    <!-- Right Workspace: Canvas & Results -->
+    <!-- Right Column: Viewport & Results Dashboard -->
     <section class="workspace">
-      <!-- Viewer Box -->
+      <!-- Main Stage Container -->
       <div class="card" style="padding: 0.75rem;">
         <div id="viewerContainer" class="viewer-container">
           <!-- Empty State -->
           <div id="emptyState" class="empty-state">
             <div class="empty-state-icon">👤</div>
-            <h3>No Image Selected</h3>
-            <p>Upload a photo or choose an instant test sample on the left to begin recognition.</p>
+            <h3>Ready for Detection</h3>
+            <p>Upload a photo, choose an instant test sample, or switch to Live Webcam mode.</p>
           </div>
 
           <!-- Loading Spinner Overlay -->
           <div id="loadingOverlay" class="loading-overlay hidden">
             <div class="spinner"></div>
-            <p id="loadingMessage" class="loading-text">Analyzing faces...</p>
+            <p id="loadingMessage" class="loading-text">Analyzing facial embeddings...</p>
           </div>
 
-          <!-- Stage (Image + Canvas) -->
+          <!-- Stage (Media + Layered Canvas) -->
           <div id="stageWrapper" class="stage-wrapper" style="display: none;"></div>
         </div>
       </div>
 
-      <!-- Detection Results Dashboard -->
+      <!-- Recognition Dashboard -->
       <section class="card">
-        <h2 class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-          Recognition Summary
-        </h2>
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Recognition Metrics
+          </div>
+        </div>
 
         <div class="results-header">
           <div class="stat-box">
@@ -195,27 +282,61 @@
             <div class="stat-label">Unknown</div>
           </div>
           <div class="stat-box">
-            <div id="statTime" class="stat-value">0ms</div>
-            <div class="stat-label">Inference Time</div>
+            <div id="statSpeed" class="stat-value">0ms</div>
+            <div class="stat-label" id="statSpeedLabel">Inference Time</div>
           </div>
         </div>
 
         <div id="detectedList" class="detected-list">
           <p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 1rem 0;">
-            Awaiting image processing.
+            Awaiting image or video feed.
           </p>
         </div>
       </section>
     </section>
   </main>
 
-  <!-- Footer -->
+  <!-- Face Enrollment Modal -->
+  <div id="enrollModal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Enroll New Face Profile</h3>
+        <button id="btnCloseEnroll" class="modal-close">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="enrollName">Full Name</label>
+        <input type="text" id="enrollName" class="form-input" placeholder="e.g. Sarah Connor" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reference Photograph</label>
+        <input type="file" id="enrollFileInput" accept="image/*" class="form-input" />
+        <small style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+          Provide a clear, well-lit frontal face photo to generate the 128-d biometric descriptor.
+        </small>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnCancelEnroll" class="btn-secondary">Cancel</button>
+        <button id="btnSubmitEnroll" class="btn-primary">Compute &amp; Enroll</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="toast">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <!-- App Footer -->
   <footer class="app-footer">
     <p>
-      <strong>FaceMatch JS</strong> &bull; 100% Client-Side In-Browser AI &bull; No images or biometrics are ever sent to an external server.
+      <strong>FaceMatch JS (v1.1.0)</strong> &bull; 100% Client-Side In-Browser AI &bull; Privacy-first biometric processing with TensorFlow.js.
     </p>
     <p style="margin-top: 0.35rem;">
-      Built with <a href="https://github.com/justadudewhohacks/face-api.js" target="_blank" rel="noopener noreferrer">face-api.js</a> &amp; TensorFlow.js. Open Source under the <a href="LICENSE">MIT License</a>.
+      Open Source under the <a href="LICENSE">MIT License</a>. Created by <a href="https://github.com/KrupalMalakiya" target="_blank" rel="noopener noreferrer">Krupal Malakiya</a>.
     </p>
   </footer>
 </body>

@@ -1,64 +1,72 @@
-# FaceMatch JS &bull; Client-Side AI Face Recognition
+# FaceMatch JS &bull; Real-Time Client-Side Face Recognition &amp; Biometrics
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TensorFlow.js](https://img.shields.io/badge/Engine-TensorFlow.js-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
-[![face-api.js](https://img.shields.io/badge/Library-face--api.js-green.svg)](https://github.com/justadudewhohacks/face-api.js)
+[![Engine: TensorFlow.js](https://img.shields.io/badge/Engine-TensorFlow.js-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
+[![Library: face--api.js](https://img.shields.io/badge/Library-face--api.js-green.svg)](https://github.com/justadudewhohacks/face-api.js)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet)](#privacy--security)
+[![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet)](#-privacy--security-guarantee)
+[![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational.svg)](CHANGELOG.md)
 
-> **Real-time, client-side face recognition and 68-point facial landmark detection web application powered by `face-api.js` and TensorFlow.js.**
-
----
-
-## 🌐 Live Demo
-
-Experience the live application directly in your browser without any installation:  
-👉 **[Live Demo on GitHub Pages](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)**
+> **High-performance client-side face recognition, live webcam video tracking, and 68-point facial landmark mesh localization powered by TensorFlow.js and face-api.js.**
 
 ---
 
-## ✨ Features
+## 🌐 Live Web Application
 
-* **🔒 100% Client-Side Privacy:** All neural network inference, feature extraction, and Euclidean distance vector matching run locally in your browser memory. No images or biometric vectors are ever transmitted to an external server.
-* **👥 Multi-Face Detection & Recognition:** Concurrently detects and identifies multiple faces in single group photographs.
-* **📐 68-Point Facial Landmark Mesh:** Pinpoints detailed facial landmarks (eyes, eyebrows, nose bridge, lips, and jawline contours).
-* **⚡ Real-Time Threshold Tuning:** Dynamic distance threshold slider with instant UI re-matching without needing to re-run neural network inference.
-* **🧪 Pre-loaded Test Samples:** Instant one-click testing using bundled multi-face group photos (`ALL.jpg` and `IMG_3641.jpg`).
-* **🎨 Modern UI / UX:** Built with a clean, responsive dark-mode interface, drag-and-drop file upload, live inference benchmarks, and status indicators.
+Try the production web app directly in your browser without local installation:  
+👉 **[Launch FaceMatch JS Live Demo](https://krupalmalakiya.github.io/faceRecognition_JavaScript/)**
+
+---
+
+## ✨ Features & Capabilities
+
+* **🔒 100% Client-Side Privacy:** All neural network inference, feature extraction, and Euclidean distance vector matching run strictly inside your browser's WebGL context. No images or biometric vectors are ever transmitted to any external server.
+* **📹 Live Webcam Video Tracking:** Real-time multi-face tracking and recognition over 30 FPS video feeds with live FPS benchmarking.
+* **➕ In-Browser Face Enrollment:** Dynamically enroll new face profiles directly from the UI without modifying source code.
+* **💾 Biometric Vector Export / Import:** Export 128-dimensional facial embeddings to `.json` files and reload them instantly without re-processing raw images.
+* **⚡ Dual Neural Detector Architecture:**
+  * **SSD MobileNet V1:** High-precision Single Shot MultiBox Detector for static photos.
+  * **Tiny Face Detector:** Ultra-lightweight (~190 KB) real-time detector optimized for live video feeds and low-power devices.
+* **📐 68-Point Facial Landmark Mesh:** Pinpoints precise facial topography (eyes, eyebrows, nose bridge, lips, and jaw contours).
+* **🎛️ Real-Time Distance Threshold Tuning:** Dynamically tune Euclidean distance thresholds (`0.10` to `0.80`) with zero-latency re-matching.
+* **🧪 Pre-loaded Benchmark Samples:** Instant one-click testing with bundled multi-face group photos (`ALL.jpg` and `IMG_3641.jpg`).
 
 ---
 
 ## 🧠 Architecture & Neural Pipeline
 
 ```
-  ┌────────────────┐
-  │  Input Image   │ (User Upload / Sample Photo)
-  └───────┬────────┘
-          │
-          ▼
-  ┌─────────────────────────────────┐
-  │ SSD MobileNet V1 Face Detector  │ -> Identifies face bounding boxes & confidence
-  └───────┬─────────────────────────┘
-          │
-          ▼
-  ┌─────────────────────────────────┐
-  │ 68-Point Facial Landmark Net    │ -> Maps detailed facial landmarks & aligns face
-  └───────┬─────────────────────────┘
-          │
-          ▼
-  ┌─────────────────────────────────┐
-  │ Face Recognition ResNet-34 Net  │ -> Extracts 128-dimensional biometric descriptor
-  └───────┬─────────────────────────┘
-          │
-          ▼
-  ┌─────────────────────────────────┐
-  │ Euclidean Distance FaceMatcher  │ -> Computes distances against labeled embeddings
-  └───────┬─────────────────────────┘
-          │
-          ▼
-  ┌─────────────────────────────────┐
-  │ Canvas Overlay & Classification │ -> Rendered bounding boxes, match % & metrics
-  └─────────────────────────────────┘
+                       ┌──────────────────────────────┐
+                       │  Input Media (Photo / Video) │
+                       └──────────────┬───────────────┘
+                                      │
+                   ┌──────────────────┴──────────────────┐
+                   ▼                                     ▼
+        ┌─────────────────────┐               ┌─────────────────────┐
+        │   SSD MobileNet V1  │               │ Tiny Face Detector  │
+        │   (High Accuracy)   │               │ (Real-Time Webcam)  │
+        └──────────┬──────────┘               └──────────┬──────────┘
+                   └──────────────────┬──────────────────┘
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │ 68-Point Facial Landmark Net   │
+                      │ (Facial Alignment & Mesh)      │
+                      └───────────────┬────────────────┘
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │ Face Recognition ResNet-34 Net │
+                      │ (128-Dimensional Vector Embed) │
+                      └───────────────┬────────────────┘
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │ Euclidean Distance FaceMatcher │
+                      │ (Distance Threshold: 0.10-0.80)│
+                      └───────────────┬────────────────┘
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │ Synchronized Canvas Overlay    │
+                      │ (Bounding Box, Name, Match %)  │
+                      └────────────────────────────────┘
 ```
 
 ---
@@ -77,29 +85,26 @@ Experience the live application directly in your browser without any installatio
    ```bash
    npm start
    ```
-   *(or use `npx serve .`)*
+   *(or run `npx serve .`)*
 
-3. **Open in your browser:**  
-   Navigate to `http://localhost:3000` (or the URL printed in your terminal).
+3. **Open in browser:**  
+   Navigate to `http://localhost:3000` (or the URL printed in terminal).
 
 ---
 
-### Option 2: Run with Python
-
-If you have Python installed:
+### Option 2: Python 3 HTTP Server
 
 ```bash
-# Python 3
 python -m http.server 8080
 ```
 Open `http://localhost:8080` in your web browser.
 
 ---
 
-### Option 3: VS Code Live Server
+### Option 3: VS Code Live Server Extension
 
-1. Open the project folder in **Visual Studio Code**.
-2. Right-click `index.html` and click **"Open with Live Server"**.
+1. Open this directory in **Visual Studio Code**.
+2. Right-click `index.html` and select **"Open with Live Server"**.
 
 ---
 
@@ -108,9 +113,13 @@ Open `http://localhost:8080` in your web browser.
 ```
 faceRecognition_JavaScript/
 ├── .github/
-│   └── workflows/
-│       └── deploy.yml          # Automated GitHub Pages CI/CD workflow
-├── images/                     # Labeled training images for each profile
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml          # GitHub bug report form
+│   │   └── feature_request.yml     # GitHub feature proposal form
+│   ├── workflows/
+│   │   └── deploy.yml              # Automated GitHub Pages CI/CD
+│   └── PULL_REQUEST_TEMPLATE.md    # PR submission checklist
+├── images/                         # Default labeled profile dataset
 │   ├── Aditya/
 │   ├── Anil/
 │   ├── Archan/
@@ -120,68 +129,56 @@ faceRecognition_JavaScript/
 │   ├── Satish/
 │   ├── Yash_Fullstack/
 │   └── Yash_Hingu/
-├── models/                     # Pre-trained TensorFlow.js weight manifests & shards
+├── models/                         # Pre-trained TensorFlow.js neural weights
 │   ├── ssd_mobilenetv1_model-*
+│   ├── tiny_face_detector_model-*
 │   ├── face_landmark_68_model-*
 │   ├── face_recognition_model-*
-│   └── tiny_face_detector_model-*
-├── Test/                       # Sample test group photos
+│   └── mtcnn_model-*
+├── Test/                           # Test group photos
 │   ├── ALL.jpg
 │   └── IMG_3641.jpg
-├── CONTRIBUTING.md             # Contribution guidelines
-├── LICENSE                     # MIT License
-├── README.md                   # Project documentation
-├── face-api.min.js             # face-api.js core bundle
-├── index.html                  # Modern web application interface
-├── package.json                # Project configuration and scripts
-├── script.js                   # Application logic, inference & canvas rendering
-└── style.css                   # Custom responsive dark-mode styling
+├── CHANGELOG.md                    # Semantic version history
+├── CODE_OF_CONDUCT.md              # Contributor Covenant v2.1
+├── CONTRIBUTING.md                 # Contribution guidelines
+├── LICENSE                         # MIT License
+├── README.md                       # Documentation & architecture
+├── face-api.min.js                 # face-api.js neural runtime
+├── index.html                      # Application UI
+├── package.json                    # Project configuration & npm metadata
+├── script.js                       # Core application engine & webcam pipeline
+├── SECURITY.md                     # Security & vulnerability reporting policy
+└── style.css                       # Responsive dark glassmorphic styling
 ```
 
 ---
 
-## 🛠️ Adding Custom Faces to the Dataset
+## 📦 Neural Models Specification
 
-To add new people to the recognition system:
-
-1. Create a new folder inside `./images/` with the person's name (e.g. `./images/John_Doe/`).
-2. Place 2–3 clear frontal face images inside the folder, named `1.jpg`, `2.jpg`, etc.
-3. Open `script.js` and add the profile to the `PROFILES` array:
-   ```javascript
-   const PROFILES = [
-     // ... existing profiles
-     { folder: "John_Doe", name: "John Doe", count: 2 },
-   ];
-   ```
-4. Refresh the application—the engine will automatically load and compute their face descriptors on startup!
-
----
-
-## 📦 Neural Models Used
-
-| Model | Purpose | Architecture | Size |
+| Model | Underlying Architecture | Primary Function | Weight Size |
 | :--- | :--- | :--- | :--- |
-| **SSD MobileNet V1** | Face Detection | Single Shot Multibox Detector with MobileNet backbone | ~5.6 MB |
-| **Face Landmark 68 Net** | 68-Point Mesh | Deep convolutional landmark localization | ~360 KB |
-| **Face Recognition Net** | Feature Extraction | ResNet-34 based deep metric learning model | ~6.4 MB |
+| **SSD MobileNet V1** | Single Shot MultiBox Detector + MobileNet | High-precision face bounding box detection | ~5.6 MB |
+| **Tiny Face Detector** | Depthwise separable CNN (custom mobile) | Real-time video face detection | ~190 KB |
+| **Face Landmark 68 Net** | Convolutional Landmark Localization | 68-point facial mesh mapping | ~360 KB |
+| **Face Recognition Net** | ResNet-34 based deep metric embedding | 128-dimensional biometric descriptor | ~6.4 MB |
 
 ---
 
-## 🔒 Privacy & Security
+## 🔒 Privacy & Security Guarantee
 
-* **Zero Cloud Dependency:** All computation takes place strictly on the client device using WebGL / WebAssembly via TensorFlow.js.
-* **No Telemetry / No Tracking:** This project contains zero third-party tracking scripts, cookies, or remote analytics.
+* **Zero Cloud Data Transmission:** All face recognition, biometrics, and camera frames are processed exclusively inside your client machine's browser memory.
+* **No Telemetry / No Analytics:** FaceMatch JS contains zero third-party trackers, analytics beacons, or remote logs.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions, bug reports, and suggestions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide to get started.
+Contributions, bug reports, and optimizations are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide and adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** &bull; see the [LICENSE](LICENSE) file for details.
+This software is released under the **MIT License** &bull; see the [LICENSE](LICENSE) file for complete details.
 
 Developed with ❤️ by [Krupal Malakiya](https://github.com/KrupalMalakiya).

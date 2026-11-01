@@ -1,24 +1,42 @@
 /**
- * FaceMatch JS - Real-Time Client-Side Face Recognition & Landmark Detection
+ * FaceMatch JS (v1.1.0)
+ * High-performance client-side face recognition, live webcam tracking, and 68-point landmark mesh detection.
  * Powered by face-api.js & TensorFlow.js
+ *
  * Author: Krupal Malakiya
  * License: MIT
  */
 
-// UI Elements
+// UI Elements - Navigation & Header
 const statusPill = document.getElementById("statusPill");
 const statusText = document.getElementById("statusText");
+const tabPhoto = document.getElementById("tabPhoto");
+const tabWebcam = document.getElementById("tabWebcam");
+const panelPhoto = document.getElementById("panelPhoto");
+const panelWebcam = document.getElementById("panelWebcam");
+
+// UI Elements - Profiles & Actions
 const profileCount = document.getElementById("profileCount");
 const profileBadges = document.getElementById("profileBadges");
+const btnOpenEnroll = document.getElementById("btnOpenEnroll");
+const btnExportJson = document.getElementById("btnExportJson");
+const btnImportJson = document.getElementById("btnImportJson");
+const jsonInput = document.getElementById("jsonInput");
+
+// UI Elements - Controls
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
 const btnSample1 = document.getElementById("btnSample1");
 const btnSample2 = document.getElementById("btnSample2");
+const btnToggleCamera = document.getElementById("btnToggleCamera");
+const cameraBtnText = document.getElementById("cameraBtnText");
+const modelSelector = document.getElementById("modelSelector");
 const thresholdSlider = document.getElementById("thresholdSlider");
 const thresholdValue = document.getElementById("thresholdValue");
 const toggleLandmarks = document.getElementById("toggleLandmarks");
 const toggleBoxes = document.getElementById("toggleBoxes");
 
+// UI Elements - Viewport & Results
 const viewerContainer = document.getElementById("viewerContainer");
 const emptyState = document.getElementById("emptyState");
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -28,11 +46,23 @@ const stageWrapper = document.getElementById("stageWrapper");
 const statTotalFaces = document.getElementById("statTotalFaces");
 const statMatched = document.getElementById("statMatched");
 const statUnknown = document.getElementById("statUnknown");
-const statTime = document.getElementById("statTime");
+const statSpeed = document.getElementById("statSpeed");
+const statSpeedLabel = document.getElementById("statSpeedLabel");
 const detectedList = document.getElementById("detectedList");
 
+// UI Elements - Enrollment Modal & Toast
+const enrollModal = document.getElementById("enrollModal");
+const btnCloseEnroll = document.getElementById("btnCloseEnroll");
+const btnCancelEnroll = document.getElementById("btnCancelEnroll");
+const btnSubmitEnroll = document.getElementById("btnSubmitEnroll");
+const enrollName = document.getElementById("enrollName");
+const enrollFileInput = document.getElementById("enrollFileInput");
+const toast = document.getElementById("toast");
+const toastIcon = document.getElementById("toastIcon");
+const toastMsg = document.getElementById("toastMsg");
+
 // Profiles Dataset Configuration
-const PROFILES = [
+const DEFAULT_PROFILES = [
   { folder: "Aditya", name: "Aditya", count: 2 },
   { folder: "Anil", name: "Anil", count: 2 },
   { folder: "Archan", name: "Archan", count: 2 },
@@ -45,37 +75,46 @@ const PROFILES = [
 ];
 
 // App State
+let activeMode = "photo"; // "photo" | "webcam"
 let labeledFaceDescriptors = [];
 let faceMatcher = null;
+let registeredNames = new Set();
+
 let currentImage = null;
 let currentCanvas = null;
 let lastDetections = null;
 let isReady = false;
+
+// Webcam State
+let webcamStream = null;
+let webcamVideo = null;
+let webcamAnimationId = null;
+let isCameraRunning = false;
+let lastFrameTime = 0;
+let frameCount = 0;
+let currentFps = 0;
 
 // 1. Initialize Engine on DOM Ready
 window.addEventListener("DOMContentLoaded", initEngine);
 
 async function initEngine() {
   try {
-    updateStatus("loading", "Loading Neural Network Models...");
+    updateStatus("loading", "Loading Neural Models (SSD MobileNet, TinyFace, Landmarks)...");
 
-    // Load pre-trained models from relative path for universal compatibility (local & GitHub Pages)
     const MODEL_PATH = "./models";
     await Promise.all([
       faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_PATH),
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_PATH),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_PATH),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_PATH),
     ]);
 
-    // Render registered profile badges dynamically
+    // Extract face descriptors for default dataset
+    labeledFaceDescriptors = await loadInitialProfiles();
+
+    // Initialize FaceMatcher with current threshold
+    rebuildFaceMatcher();
     renderProfileBadges();
-
-    // Extract face descriptors for known profiles
-    labeledFaceDescriptors = await loadAllProfiles();
-
-    // Initialize FaceMatcher with default threshold (0.50)
-    const initialThreshold = parseFloat(thresholdSlider.value);
-    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, initialThreshold);
 
     isReady = true;
     updateStatus("ready", "System Ready for Recognition");
@@ -83,6 +122,8 @@ async function initEngine() {
     // Enable interactive controls
     btnSample1.disabled = false;
     btnSample2.disabled = false;
+    btnToggleCamera.disabled = false;
+
     setupEventListeners();
   } catch (error) {
     console.error("Initialization error:", error);
@@ -95,22 +136,31 @@ function updateStatus(state, message) {
   statusText.textContent = message;
 }
 
-function renderProfileBadges() {
-  profileCount.textContent = PROFILES.length;
-  profileBadges.innerHTML = PROFILES.map(
-    (p) => `<span class="profile-tag">${escapeHtml(p.name)}</span>`
-  ).join("");
+function rebuildFaceMatcher() {
+  if (labeledFaceDescriptors.length > 0) {
+    const threshold = parseFloat(thresholdSlider.value);
+    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, threshold);
+  }
 }
 
-// 2. Load Labeled Descriptors from Images
-async function loadAllProfiles() {
-  const labeledDescriptors = [];
+function renderProfileBadges() {
+  profileCount.textContent = registeredNames.size;
+  profileBadges.innerHTML = Array.from(registeredNames)
+    .sort()
+    .map((name) => `<span class="profile-tag">${escapeHtml(name)}</span>`)
+    .join("");
+}
 
-  for (let idx = 0; idx < PROFILES.length; idx++) {
-    const profile = PROFILES[idx];
+// 2. Load Initial Labeled Images
+async function loadInitialProfiles() {
+  const descriptors = [];
+  registeredNames.clear();
+
+  for (let idx = 0; idx < DEFAULT_PROFILES.length; idx++) {
+    const profile = DEFAULT_PROFILES[idx];
     updateStatus(
       "loading",
-      `Computing embeddings: ${profile.name} (${idx + 1}/${PROFILES.length})...`
+      `Computing embeddings: ${profile.name} (${idx + 1}/${DEFAULT_PROFILES.length})...`
     );
 
     const descriptions = [];
@@ -127,8 +177,6 @@ async function loadAllProfiles() {
 
         if (detection && detection.descriptor) {
           descriptions.push(detection.descriptor);
-        } else {
-          console.warn(`[FaceMatch] Face not detected in ${imgUrl}`);
         }
       } catch (err) {
         console.warn(`[FaceMatch] Could not load image for ${profile.name} (${i}.jpg):`, err);
@@ -136,21 +184,31 @@ async function loadAllProfiles() {
     }
 
     if (descriptions.length > 0) {
-      labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(profile.name, descriptions));
+      descriptors.push(new faceapi.LabeledFaceDescriptors(profile.name, descriptions));
+      registeredNames.add(profile.name);
     }
   }
 
-  return labeledDescriptors;
+  return descriptors;
 }
 
-// 3. Image Processing & Face Recognition Pipeline
+// 3. Get Selected Detector Options
+function getDetectorOptions() {
+  const selectedModel = modelSelector.value;
+  if (selectedModel === "tinyFaceDetector") {
+    return new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 });
+  }
+  return new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+}
+
+// 4. Static Photo Processing Pipeline
 async function processImageSource(src, isFile = false) {
   if (!isReady) {
-    alert("Neural engine is still initializing. Please wait a moment.");
+    showToast("Neural engine is still initializing.", "warning");
     return;
   }
 
-  showLoading("Analyzing facial features...");
+  showLoading("Analyzing facial embeddings...");
 
   try {
     const img = new Image();
@@ -159,56 +217,47 @@ async function processImageSource(src, isFile = false) {
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = () => reject(new Error("Unable to load the requested image."));
-      if (isFile) {
-        img.src = src;
-      } else {
-        img.src = src;
-      }
+      img.src = src;
     });
 
     currentImage = img;
 
-    // Clear previous render
+    // Reset stage
     stageWrapper.innerHTML = "";
     stageWrapper.style.display = "inline-block";
     emptyState.style.display = "none";
 
-    // Append image to DOM
+    // Append image & create synced canvas
     stageWrapper.appendChild(img);
-
-    // Create synchronized overlay canvas
     currentCanvas = faceapi.createCanvasFromMedia(img);
     stageWrapper.appendChild(currentCanvas);
 
-    // Set canvas dimensions to image natural dimensions
     const displaySize = {
       width: img.naturalWidth || img.width,
       height: img.naturalHeight || img.height,
     };
     faceapi.matchDimensions(currentCanvas, displaySize);
 
-    // Execute Inference & Benchmark
+    // Run inference with selected model
     const startTime = performance.now();
     const detections = await faceapi
-      .detectAllFaces(img)
+      .detectAllFaces(img, getDetectorOptions())
       .withFaceLandmarks()
       .withFaceDescriptors();
     const inferenceTime = Math.round(performance.now() - startTime);
 
-    // Cache detections for real-time threshold slider updates
     lastDetections = faceapi.resizeResults(detections, displaySize);
-
-    // Render Bounding Boxes & Update Results Card
+    statSpeedLabel.textContent = "Inference Time";
     renderDetections(inferenceTime);
   } catch (err) {
     console.error("Error processing image:", err);
-    alert("Error processing image. Check console for details.");
+    showToast("Failed to process image.", "error");
   } finally {
     hideLoading();
   }
 }
 
-// 4. Render Detections and Summary
+// 5. Render Detections Overlay & Summary
 function renderDetections(inferenceTime = null) {
   if (!currentCanvas || !lastDetections || !faceMatcher) return;
 
@@ -221,7 +270,6 @@ function renderDetections(inferenceTime = null) {
   let unknownCount = 0;
   const detectionSummaries = [];
 
-  // Draw Boxes & Labels
   results.forEach((match, i) => {
     const box = lastDetections[i].detection.box;
     const isUnknown = match.label === "unknown";
@@ -259,7 +307,6 @@ function renderDetections(inferenceTime = null) {
     }
   });
 
-  // Draw Facial Landmarks Mesh
   if (toggleLandmarks.checked) {
     faceapi.draw.drawFaceLandmarks(currentCanvas, lastDetections);
   }
@@ -269,7 +316,7 @@ function renderDetections(inferenceTime = null) {
   statMatched.textContent = matchedCount;
   statUnknown.textContent = unknownCount;
   if (inferenceTime !== null) {
-    statTime.textContent = `${inferenceTime}ms`;
+    statSpeed.textContent = `${inferenceTime}ms`;
   }
 
   renderResultsList(detectionSummaries);
@@ -279,7 +326,7 @@ function renderResultsList(summaries) {
   if (summaries.length === 0) {
     detectedList.innerHTML = `
       <p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 1rem 0;">
-        No faces detected in this image.
+        No faces detected in current frame.
       </p>
     `;
     return;
@@ -305,16 +352,251 @@ function renderResultsList(summaries) {
     .join("");
 }
 
-// 5. Setup UI Event Listeners
-function setupEventListeners() {
-  // File Dropzone & Input
-  dropzone.addEventListener("click", () => fileInput.click());
+// 6. Live Webcam Tracking Loop
+async function startWebcam() {
+  if (isCameraRunning) return;
 
+  try {
+    showLoading("Requesting webcam stream...");
+
+    webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: "user" },
+      audio: false,
+    });
+
+    stageWrapper.innerHTML = "";
+    stageWrapper.style.display = "inline-block";
+    emptyState.style.display = "none";
+
+    webcamVideo = document.createElement("video");
+    webcamVideo.autoplay = true;
+    webcamVideo.muted = true;
+    webcamVideo.playsInline = true;
+    webcamVideo.srcObject = webcamStream;
+
+    await new Promise((resolve) => {
+      webcamVideo.onloadedmetadata = () => {
+        webcamVideo.play();
+        resolve();
+      };
+    });
+
+    stageWrapper.appendChild(webcamVideo);
+    currentCanvas = faceapi.createCanvasFromMedia(webcamVideo);
+    stageWrapper.appendChild(currentCanvas);
+
+    const displaySize = { width: webcamVideo.videoWidth, height: webcamVideo.videoHeight };
+    faceapi.matchDimensions(currentCanvas, displaySize);
+
+    isCameraRunning = true;
+    btnToggleCamera.classList.add("stopping");
+    cameraBtnText.textContent = "Stop Webcam Stream";
+    statSpeedLabel.textContent = "Live Stream FPS";
+    hideLoading();
+
+    // Automatically switch to TinyFaceDetector for smooth real-time video performance
+    modelSelector.value = "tinyFaceDetector";
+
+    runWebcamLoop(displaySize);
+  } catch (err) {
+    console.error("Webcam error:", err);
+    hideLoading();
+    showToast("Could not access webcam. Ensure permissions are granted.", "error");
+  }
+}
+
+function stopWebcam() {
+  if (!isCameraRunning) return;
+
+  if (webcamAnimationId) {
+    cancelAnimationFrame(webcamAnimationId);
+    webcamAnimationId = null;
+  }
+
+  if (webcamStream) {
+    webcamStream.getTracks().forEach((track) => track.stop());
+    webcamStream = null;
+  }
+
+  isCameraRunning = false;
+  btnToggleCamera.classList.remove("stopping");
+  cameraBtnText.textContent = "Start Webcam Stream";
+
+  stageWrapper.innerHTML = "";
+  stageWrapper.style.display = "none";
+  emptyState.style.display = "block";
+  statSpeedLabel.textContent = "Inference Time";
+  statSpeed.textContent = "0ms";
+  detectedList.innerHTML = `
+    <p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 1rem 0;">
+      Webcam stream stopped.
+    </p>
+  `;
+}
+
+async function runWebcamLoop(displaySize) {
+  if (!isCameraRunning) return;
+
+  const now = performance.now();
+  frameCount++;
+  if (now - lastFrameTime >= 1000) {
+    currentFps = frameCount;
+    frameCount = 0;
+    lastFrameTime = now;
+    statSpeed.textContent = `${currentFps} FPS`;
+  }
+
+  try {
+    if (webcamVideo && !webcamVideo.paused && !webcamVideo.ended) {
+      const detections = await faceapi
+        .detectAllFaces(webcamVideo, getDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      lastDetections = faceapi.resizeResults(detections, displaySize);
+      renderDetections();
+    }
+  } catch (err) {
+    console.warn("Webcam inference frame dropped:", err);
+  }
+
+  webcamAnimationId = requestAnimationFrame(() => runWebcamLoop(displaySize));
+}
+
+// 7. Dynamic In-Browser Face Enrollment
+async function handleEnrollSubmit() {
+  const name = enrollName.value.trim();
+  const file = enrollFileInput.files[0];
+
+  if (!name) {
+    showToast("Please enter a name for the profile.", "warning");
+    return;
+  }
+
+  if (!file) {
+    showToast("Please select a photo of the face.", "warning");
+    return;
+  }
+
+  btnSubmitEnroll.disabled = true;
+  btnSubmitEnroll.textContent = "Computing Embeddings...";
+
+  try {
+    const img = await faceapi.bufferToImage(file);
+    const detection = await faceapi
+      .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection || !detection.descriptor) {
+      showToast("No clear frontal face detected in the photo. Please try another.", "error");
+      btnSubmitEnroll.disabled = false;
+      btnSubmitEnroll.textContent = "Compute & Enroll";
+      return;
+    }
+
+    // Check if profile exists, append descriptor or create new
+    const existing = labeledFaceDescriptors.find((l) => l.label === name);
+    if (existing) {
+      existing.descriptors.push(detection.descriptor);
+    } else {
+      labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(name, [detection.descriptor]));
+      registeredNames.add(name);
+    }
+
+    rebuildFaceMatcher();
+    renderProfileBadges();
+
+    closeEnrollModal();
+    showToast(`Profile "${name}" successfully enrolled!`, "success");
+  } catch (err) {
+    console.error("Enrollment error:", err);
+    showToast("Failed to enroll face profile.", "error");
+  } finally {
+    btnSubmitEnroll.disabled = false;
+    btnSubmitEnroll.textContent = "Compute & Enroll";
+  }
+}
+
+// 8. Vector Embeddings Export & Import
+function exportEmbeddingsToJson() {
+  if (labeledFaceDescriptors.length === 0) {
+    showToast("No profiles to export.", "warning");
+    return;
+  }
+
+  const payload = {
+    app: "FaceMatch JS",
+    version: "1.1.0",
+    exportedAt: new Date().toISOString(),
+    profiles: labeledFaceDescriptors.map((ld) => ({
+      name: ld.label,
+      descriptors: ld.descriptors.map((d) => Array.from(d)),
+    })),
+  };
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+  const dlAnchor = document.createElement("a");
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `facematch-embeddings-${Date.now()}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+
+  showToast("Biometric embeddings exported successfully!", "success");
+}
+
+function importEmbeddingsFromJson(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (!data.profiles || !Array.isArray(data.profiles)) {
+        throw new Error("Invalid embeddings format.");
+      }
+
+      let count = 0;
+      data.profiles.forEach((p) => {
+        if (p.name && Array.isArray(p.descriptors)) {
+          const floatDescriptors = p.descriptors.map((arr) => new Float32Array(arr));
+          const existing = labeledFaceDescriptors.find((l) => l.label === p.name);
+          if (existing) {
+            existing.descriptors.push(...floatDescriptors);
+          } else {
+            labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(p.name, floatDescriptors));
+            registeredNames.add(p.name);
+          }
+          count++;
+        }
+      });
+
+      rebuildFaceMatcher();
+      renderProfileBadges();
+      showToast(`Imported ${count} profiles from JSON!`, "success");
+    } catch (err) {
+      console.error("Import error:", err);
+      showToast("Failed to parse JSON file.", "error");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// 9. Event Listeners & Mode Switching
+function setupEventListeners() {
+  // Mode Switcher Tabs
+  tabPhoto.addEventListener("click", () => switchMode("photo"));
+  tabWebcam.addEventListener("click", () => switchMode("webcam"));
+
+  // Photo Dropzone & File Input
+  dropzone.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => processImageSource(event.target.result, true);
+      reader.onload = (ev) => processImageSource(ev.target.result, true);
       reader.readAsDataURL(file);
     }
   });
@@ -323,44 +605,106 @@ function setupEventListeners() {
     e.preventDefault();
     dropzone.classList.add("dragover");
   });
-
-  dropzone.addEventListener("dragleave", () => {
-    dropzone.classList.remove("dragover");
-  });
-
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
   dropzone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropzone.classList.remove("dragover");
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
-      reader.onload = (event) => processImageSource(event.target.result, true);
+      reader.onload = (ev) => processImageSource(ev.target.result, true);
       reader.readAsDataURL(file);
     }
   });
 
-  // Instant Sample Testing
-  btnSample1.addEventListener("click", () => {
-    processImageSource("./Test/ALL.jpg");
+  // Instant Test Samples
+  btnSample1.addEventListener("click", () => processImageSource("./Test/ALL.jpg"));
+  btnSample2.addEventListener("click", () => processImageSource("./Test/IMG_3641.jpg"));
+
+  // Webcam Toggle
+  btnToggleCamera.addEventListener("click", () => {
+    if (isCameraRunning) {
+      stopWebcam();
+    } else {
+      startWebcam();
+    }
   });
 
-  btnSample2.addEventListener("click", () => {
-    processImageSource("./Test/IMG_3641.jpg");
-  });
-
-  // Threshold Slider (Instant re-matching without re-inference!)
+  // Threshold Slider
   thresholdSlider.addEventListener("input", (e) => {
     const newThreshold = parseFloat(e.target.value);
     thresholdValue.textContent = newThreshold.toFixed(2);
-    if (labeledFaceDescriptors.length > 0) {
-      faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, newThreshold);
+    rebuildFaceMatcher();
+    if (!isCameraRunning) {
       renderDetections();
     }
   });
 
-  // View Toggles
-  toggleLandmarks.addEventListener("change", () => renderDetections());
-  toggleBoxes.addEventListener("change", () => renderDetections());
+  // View Toggles & Model Selector
+  toggleLandmarks.addEventListener("change", () => {
+    if (!isCameraRunning) renderDetections();
+  });
+  toggleBoxes.addEventListener("change", () => {
+    if (!isCameraRunning) renderDetections();
+  });
+
+  // Enrollment Modal Handlers
+  btnOpenEnroll.addEventListener("click", openEnrollModal);
+  btnCloseEnroll.addEventListener("click", closeEnrollModal);
+  btnCancelEnroll.addEventListener("click", closeEnrollModal);
+  btnSubmitEnroll.addEventListener("click", handleEnrollSubmit);
+
+  // JSON Export / Import
+  btnExportJson.addEventListener("click", exportEmbeddingsToJson);
+  btnImportJson.addEventListener("click", () => jsonInput.click());
+  jsonInput.addEventListener("change", importEmbeddingsFromJson);
+}
+
+function switchMode(mode) {
+  if (activeMode === mode) return;
+
+  if (activeMode === "webcam" && isCameraRunning) {
+    stopWebcam();
+  }
+
+  activeMode = mode;
+
+  if (mode === "photo") {
+    tabPhoto.classList.add("active");
+    tabWebcam.classList.remove("active");
+    panelPhoto.style.display = "block";
+    panelWebcam.style.display = "none";
+    modelSelector.value = "ssdMobilenetv1";
+  } else {
+    tabWebcam.classList.add("active");
+    tabPhoto.classList.remove("active");
+    panelPhoto.style.display = "none";
+    panelWebcam.style.display = "block";
+    modelSelector.value = "tinyFaceDetector";
+  }
+
+  // Reset stage
+  stageWrapper.innerHTML = "";
+  stageWrapper.style.display = "none";
+  emptyState.style.display = "block";
+}
+
+// Modal & Toast Helpers
+function openEnrollModal() {
+  enrollName.value = "";
+  enrollFileInput.value = "";
+  enrollModal.classList.add("open");
+}
+
+function closeEnrollModal() {
+  enrollModal.classList.remove("open");
+}
+
+function showToast(msg, type = "info") {
+  toastMsg.textContent = msg;
+  toastIcon.textContent = type === "success" ? "✅" : type === "error" ? "❌" : type === "warning" ? "⚠️" : "ℹ️";
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 4000);
 }
 
 function showLoading(msg) {
