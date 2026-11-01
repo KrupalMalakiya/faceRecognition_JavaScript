@@ -1,0 +1,32 @@
+{
+  "name": "face-recognition-javascript",
+  "version": "1.0.0",
+  "description": "Real-time, client-side face recognition and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js.",
+  "main": "script.js",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve .",
+    "test": "echo \"Client-side test suite: open index.html in a web browser\" && exit 0"
+  },
+  "keywords": [
+    "face-recognition",
+    "face-api",
+    "tensorflowjs",
+    "javascript",
+    "computer-vision",
+    "artificial-intelligence",
+    "facial-landmarks",
+    "client-side-ai",
+    "open-source"
+  ],
+  "author": "Krupal Malakiya",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KrupalMalakiya/faceRecognition_JavaScript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KrupalMalakiya/faceRecognition_JavaScript/issues"
+  },
+  "homepage": "https://github.com/KrupalMalakiya/faceRecognition_JavaScript#readme"
+}

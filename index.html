@@ -1,29 +1,222 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <script defer src="face-api.min.js"></script>
-    <script defer src="script.js"></script>
-    <title>Face Recognition 1</title>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FaceMatch JS - Client-Side AI Face Recognition</title>
+  <meta name="description" content="Real-time, client-side face recognition and 68-point facial landmark detection web application powered by TensorFlow.js and face-api.js." />
+  
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="face-api.min.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 3H5a2 2 0 0 0-2 2v2"></path>
+            <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+            <path d="M3 17v2a2 2 0 0 0 2 2h2"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 9v1"></path>
+            <path d="M12 14v1"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">FaceMatch JS</h1>
+          <p class="brand-subtitle">Real-Time Client-Side Face Recognition & Landmarks</p>
+        </div>
+      </div>
 
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-      }
-      canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <input type="file" id="imageUpload" />
-  </body>
+      <div class="header-actions">
+        <div id="statusPill" class="status-pill loading">
+          <span class="status-dot"></span>
+          <span id="statusText">Initializing Neural Engine...</span>
+        </div>
+        
+        <a href="https://github.com/KrupalMalakiya/faceRecognition_JavaScript" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-container">
+    <!-- Left Sidebar: Controls & Input -->
+    <aside class="sidebar">
+      <!-- Registered Profiles Card -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Registered Profiles (<span id="profileCount">9</span>)
+        </h2>
+        <div id="profileBadges" class="profile-badges">
+          <span class="profile-tag">Aditya</span>
+          <span class="profile-tag">Anil</span>
+          <span class="profile-tag">Archan</span>
+          <span class="profile-tag">Gabriel</span>
+          <span class="profile-tag">Krupal</span>
+          <span class="profile-tag">Ritesh</span>
+          <span class="profile-tag">Satish</span>
+          <span class="profile-tag">Yash Fullstack</span>
+          <span class="profile-tag">Yash Hingu</span>
+        </div>
+      </section>
+
+      <!-- Upload Card -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Input Image
+        </h2>
+        
+        <div id="dropzone" class="dropzone">
+          <div class="dropzone-icon">📷</div>
+          <p class="dropzone-text"><strong>Click to upload</strong> or drag & drop</p>
+          <p class="dropzone-hint">Supports JPG, PNG, WEBP</p>
+          <input type="file" id="fileInput" accept="image/*" />
+        </div>
+      </section>
+
+      <!-- Instant Test Samples -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Instant Test Samples
+        </h2>
+        <div class="samples-grid">
+          <button id="btnSample1" class="btn-sample" disabled>
+            <span>👥 Group Photo 1</span>
+            <small>ALL.jpg (Multi-face)</small>
+          </button>
+          <button id="btnSample2" class="btn-sample" disabled>
+            <span>🏢 Group Photo 2</span>
+            <small>IMG_3641.jpg (Indoor)</small>
+          </button>
+        </div>
+      </section>
+
+      <!-- Detection Settings -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Matching Parameters
+        </h2>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Distance Threshold</span>
+            <span id="thresholdValue" class="control-value">0.50</span>
+          </div>
+          <input type="range" id="thresholdSlider" min="0.10" max="0.80" step="0.05" value="0.50" />
+          <small style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+            Lower = Stricter match | Higher = Looser match
+          </small>
+        </div>
+
+        <div class="control-group">
+          <label class="toggle-group">
+            <span>Show Facial Landmarks (68 mesh points)</span>
+            <input type="checkbox" id="toggleLandmarks" />
+          </label>
+          <label class="toggle-group">
+            <span>Show Bounding Boxes</span>
+            <input type="checkbox" id="toggleBoxes" checked />
+          </label>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Right Workspace: Canvas & Results -->
+    <section class="workspace">
+      <!-- Viewer Box -->
+      <div class="card" style="padding: 0.75rem;">
+        <div id="viewerContainer" class="viewer-container">
+          <!-- Empty State -->
+          <div id="emptyState" class="empty-state">
+            <div class="empty-state-icon">👤</div>
+            <h3>No Image Selected</h3>
+            <p>Upload a photo or choose an instant test sample on the left to begin recognition.</p>
+          </div>
+
+          <!-- Loading Spinner Overlay -->
+          <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p id="loadingMessage" class="loading-text">Analyzing faces...</p>
+          </div>
+
+          <!-- Stage (Image + Canvas) -->
+          <div id="stageWrapper" class="stage-wrapper" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- Detection Results Dashboard -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Recognition Summary
+        </h2>
+
+        <div class="results-header">
+          <div class="stat-box">
+            <div id="statTotalFaces" class="stat-value">0</div>
+            <div class="stat-label">Faces Detected</div>
+          </div>
+          <div class="stat-box">
+            <div id="statMatched" class="stat-value">0</div>
+            <div class="stat-label">Identified</div>
+          </div>
+          <div class="stat-box">
+            <div id="statUnknown" class="stat-value">0</div>
+            <div class="stat-label">Unknown</div>
+          </div>
+          <div class="stat-box">
+            <div id="statTime" class="stat-value">0ms</div>
+            <div class="stat-label">Inference Time</div>
+          </div>
+        </div>
+
+        <div id="detectedList" class="detected-list">
+          <p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 1rem 0;">
+            Awaiting image processing.
+          </p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>
+      <strong>FaceMatch JS</strong> &bull; 100% Client-Side In-Browser AI &bull; No images or biometrics are ever sent to an external server.
+    </p>
+    <p style="margin-top: 0.35rem;">
+      Built with <a href="https://github.com/justadudewhohacks/face-api.js" target="_blank" rel="noopener noreferrer">face-api.js</a> &amp; TensorFlow.js. Open Source under the <a href="LICENSE">MIT License</a>.
+    </p>
+  </footer>
+</body>
 </html>
